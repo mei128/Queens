@@ -68,7 +68,7 @@ def place(pos,locs):
 #
 def cropboard():
     screen = pyautogui.screenshot()      # Take screen shot
-    screen = screen.convert(mode="RGB")
+    # screen = screen.convert(mode="RGB")
     sx, sy = screen.size
     mx = sx//2                           # Mid point H
     hx = mx                            
@@ -79,23 +79,25 @@ def cropboard():
     bg = 740                             # bg (empiric)
 
     while sum(screen.getpixel((lx,my)))<bg :    # Move cursor left until BG
-        lx -= 1
+        lx -= 2
         assert lx>0, "Board not found."         #    or limit reached
         
     while sum(screen.getpixel((hx,my)))<bg :    # Move cursor right until BG
-        hx += 1
+        hx += 2
         assert hx<sx, "Board not found."        #    or limit reached
         
     while sum(screen.getpixel((mx,ly)))<bg :    # Move cursor up until BG
-        ly -= 1
+        ly -= 2
         assert ly>0, "Board not found."         #    or limit reached
         
     while sum(screen.getpixel((mx,hy)))<bg :    # Move cursor down until BG
-        hy += 1
+        hy += 2
         assert hy<sy, "Board not found."        #    or limit reached
 
-    lx += 1                                     # Step back to edge
-    ly += 1
+    lx += 3                                     # Step back to edge
+    ly += 3
+    hx -= 2 
+    hy -= 2
 
     board = screen.crop([lx,ly,hx,hy])          # Crop board found
 
@@ -229,7 +231,7 @@ def solution(locs,pos,img):
             if locs[r,c]==1 :
                 cy = round(sqr/2+sqr*r)     # approx square center
                 cx = round(sqr/2+sqr*c)
-                pyautogui.click(x=pos[0]+cx, y=pos[1]+cy, clicks=2, interval=0.1)  # Click solution on screen
+                pyautogui.click(x=pos[0]+cx, y=pos[1]+cy, clicks=2, interval=0.02) # Click solution on screen
                 drw.ellipse([cx-cr,cy-cr,cx+cr,cy+cr], fill=(0,0,0))               # and mark on board
     return
 
@@ -251,7 +253,10 @@ many of those who solve it in seconds everyday also cheat).
 
           """)
     delay = int(input("Enter number of seconds of delay:"))
-    time.sleep(delay)
+    time.sleep(abs(delay))
+    if delay>0 :
+        pyautogui.click(950,685, clicks=1)
+        time.sleep(0.35)
     crp = cropboard()            # Grab board from the screen
 
     if crp == None :             # Cropping failed to detect board
@@ -266,9 +271,11 @@ many of those who solve it in seconds everyday also cheat).
     cbrd = codeboard(img)                       # Color coded board 
     cpos = colorlists(cbrd)                     # Color position lists
     locs  = np.zeros(cbrd.shape, dtype=np.int8) # initial empty board
-
+    st=time.monotonic_ns()
     if solve(cpos,locs):                        # If solution can be found
+        et=time.monotonic_ns()
         solution(locs, (tx,ty), img)            #    play it
         img.show()                              #    and show it
+        print("Solved in ",et-st," nanoseconds")
     else:
         print("Problem has no solution (has it?)")
